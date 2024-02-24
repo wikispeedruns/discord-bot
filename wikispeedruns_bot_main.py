@@ -36,28 +36,28 @@ bot_reports = [
     #   - average path length
     #   If new POTD is active, announce prompt, link to home page
     
-    {
-        'name': 'daily_summary_stats',
-        'target_channel': channel_id,
-        'interval': 'DEBUG_100',
-        'func': reports.daily_summary_stats
-    },
-    {
-        'name': 'potd_status_check',
-        'target_channel': channel_id,
-        'interval': 'DEBUG_100',
-        'func': reports.potd_status_check
-    },
-    {
-        'name': 'daily_cmty_submission_stats',
-        'target_channel': channel_id,
-        'interval': 'DEBUG_100',
-        'func': reports.cmty_submission_stats
-    },
+    # {
+    #     'name': 'daily_summary_stats',
+    #     'target_channel': channel_id,
+    #     'interval': 'DAILY',
+    #     'func': reports.daily_summary_stats
+    # },
+    # {
+    #     'name': 'potd_status_check',
+    #     'target_channel': channel_id,
+    #     'interval': 'DAILY',
+    #     'func': reports.potd_status_check
+    # },
+    # {
+    #     'name': 'daily_cmty_submission_stats',
+    #     'target_channel': channel_id,
+    #     'interval': 'DAILY',
+    #     'func': reports.cmty_submission_stats
+    # },
     {
         'name': 'Prompt of the day summary!',
         'target_channel': channel_id,
-        'interval': 'DEBUG_100',
+        'interval': 'DEBUG_10',
         'func': reports.daily_prompt_summary
     },
 ]
@@ -81,7 +81,7 @@ async def on_ready():
             channel = bot.get_channel(report['target_channel'])
             if channel:
                 res = await report['func'](conn)
-                report_str = f"\n{report['name']}\n-------------------\n{res}"
+                report_str = f"\n**{report['name']}**\n{res}"
                 print(report_str)
                 await channel.send(report_str)
         func.before_loop(bot.wait_until_ready)

@@ -179,10 +179,10 @@ async def daily_prompt_summary(conn):
         average_path_length_comment = "Was this prompt too easy?"
     
 
-    return f"Prompt {prompt_id}: \"{start_article}\"\n" + \
-        f"{num_runs} wikispeedrunners attempted this prompt, while {num_completed_runs} crossed the finish line on their first try. \n" + \
-        f"That's an overall first try completion rate of {completion_rate:.1f}%. {completion_rate_comment}\n" + \
-        f"Of those who finished, the average time is {average_time} seconds. {average_time_comment}\n" + \
-        f"The average path length was {average_path_length}. {average_path_length_comment}\n" + \
-        f"Congrats to our top {len(top)}: {', '.join([f'{row['username']} ({row['play_time']} seconds)' for row in top])}!\n\n" + \
-        "Go challenge today's prompt when you're ready at https://wikispeedruns.com/. See you again in 24 hours!"
+    return f"\n***Prompt {prompt_id}: \"{start_article}\"***\n\n" + \
+        f"**{num_runs}** wikispeedrunners attempted this prompt, while **{num_completed_runs}** crossed the finish line on their first try. \n" + \
+        f"That's an overall first try completion rate of **{completion_rate:.1f}%**. {completion_rate_comment}\n\n" + \
+        f"Of those who finished, the average time is **{average_time}** seconds. {average_time_comment}\n" + \
+        f"The average path length was **{average_path_length}**. {average_path_length_comment}\n\n" + \
+        f"Congrats to our top {len(top)}: {', '.join([f'**{row['username']}** *({row['play_time']} seconds)*' for row in top])}!\n\n" + \
+        "Go challenge today's prompt when you're ready at** https://wikispeedruns.com/ **. See you again in 24 hours!"
