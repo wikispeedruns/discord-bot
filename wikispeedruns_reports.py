@@ -47,15 +47,15 @@ def _get_num_cmty_submissions(conn, daily=False, sprints=True):
 async def daily_summary_stats(conn):
     new_user_count = _count_rows_from_table(conn, 'users', ts_col='join_date')
     new_run_count = _count_rows_from_table(conn, 'sprint_runs', ts_col='start_time')
-    return  f"New users in the last 24 hours: {new_user_count}" + \
-        f"\nNew runs in the last 24 hours: {new_run_count}"
+    return  f"New users in the last 24 hours: **{new_user_count}**" + \
+        f"\nNew runs in the last 24 hours: **{new_run_count}**"
 
 
 async def potd_status_check(conn):
     prompts_left = _count_consecutive_future_prompts(conn)
-    output = f"We currently have {prompts_left} consecutive future prompts left."
+    output = f"We currently have **{prompts_left}** consecutive future prompts left."
     if prompts_left < 7:
-        output += "\nWARNING - add more prompts!"
+        output += "\n***WARNING - add more prompts!***"
     return output
 
 
@@ -64,10 +64,10 @@ async def cmty_submission_stats(conn):
     marathon_total  =   _get_num_cmty_submissions(conn, daily=False,    sprints=False)
     sprint_daily    =   _get_num_cmty_submissions(conn, daily=True,     sprints=True)
     marathon_daily  =   _get_num_cmty_submissions(conn, daily=True,     sprints=False)
-    return f"Cmty sprints submitted in the last 24 hours: {sprint_daily}" + \
-        f"\nCmty marathons submitted in the last 24 hours: {marathon_daily}" + \
-        f"\nTotal pending cmty sprints: {sprint_total}" + \
-        f"\nTotal pending cmty marathons: {marathon_total}" 
+    return f"Cmty sprints submitted in the last 24 hours: **{sprint_daily}**" + \
+        f"\nCmty marathons submitted in the last 24 hours: **{marathon_daily}**" + \
+        f"\nTotal pending cmty sprints: **{sprint_total}**" + \
+        f"\nTotal pending cmty marathons: **{marathon_total}**" 
 
 def _get_leaderboard_query(
     prompt_id,
