@@ -1,11 +1,14 @@
 import json
 import pymysql
 import os
+import asyncio
+import datetime
 
 import discord
 from discord.ext import commands, tasks
 
 import wikispeedruns_reports as reports
+
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -14,6 +17,7 @@ bot = commands.Bot(command_prefix='>', intents=intents)
 channel_id = int(os.getenv('CHANNEL_ID'))
 bot_token = os.getenv('BOT_TOKEN')
 
+# Report intervals
 # 'DAILY':   everyday at 00:00:00 UTC
 # 'DEBUG_x': DEBUG_ONLY - every x seconds
 
@@ -35,21 +39,27 @@ bot_reports = [
     {
         'name': 'daily_summary_stats',
         'target_channel': channel_id,
-        'interval': 'DAILY',
+        'interval': 'DEBUG_100',
         'func': reports.daily_summary_stats
     },
     {
         'name': 'potd_status_check',
         'target_channel': channel_id,
-        'interval': 'DAILY',
+        'interval': 'DEBUG_100',
         'func': reports.potd_status_check
     },
-    # {
-    #     'name': 'daily_cmty_submission_stats',
-    #     'target_channel': channel_id,
-    #     'interval': {'hours': 24},
-    #     'func': reports.cmty_submission_stats
-    # },
+    {
+        'name': 'daily_cmty_submission_stats',
+        'target_channel': channel_id,
+        'interval': 'DEBUG_100',
+        'func': reports.cmty_submission_stats
+    },
+    {
+        'name': 'Prompt of the day summary!',
+        'target_channel': channel_id,
+        'interval': 'DEBUG_100',
+        'func': reports.daily_prompt_summary
+    },
 ]
 
 async_tasks = []
@@ -58,14 +68,22 @@ async_tasks = []
 async def on_ready():
     conn = get_database()
     for report in bot_reports:
-        @tasks.loop(**report['interval'])
+        @tasks.loop(seconds=1)
         async def func(report=report):
+            if report['interval'] == 'DAILY':
+                now = datetime.datetime.utcnow()
+                next_midnight = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(days=1)
+                time_until_next_midnight = (next_midnight - now).total_seconds()
+                await asyncio.sleep(time_until_next_midnight)
+            if report['interval'].startswith('DEBUG_'):
+                await asyncio.sleep(int(report['interval'].split('_')[1]) - 1)
+
             channel = bot.get_channel(report['target_channel'])
             if channel:
                 res = await report['func'](conn)
                 report_str = f"\n{report['name']}\n-------------------\n{res}"
                 print(report_str)
-                # await channel.send(report_str)
+                await channel.send(report_str)
         func.before_loop(bot.wait_until_ready)
         async_tasks.append(func)
     for task in async_tasks:
