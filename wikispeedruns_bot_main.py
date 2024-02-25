@@ -70,14 +70,20 @@ async def on_ready():
     for report in bot_reports:
         @tasks.loop(seconds=1)
         async def func(report=report):
+            now = datetime.datetime.utcnow()
+            local_now = datetime.datetime.now()
             if report['interval'] == 'DAILY':
-                now = datetime.datetime.utcnow()
                 next_midnight = datetime.datetime(now.year, now.month, now.day) + datetime.timedelta(days=1)
-                time_until_next_midnight = (next_midnight - now).total_seconds()
-                await asyncio.sleep(time_until_next_midnight)
+                time_to_wait = (next_midnight - now).total_seconds()
             if report['interval'].startswith('DEBUG_'):
-                await asyncio.sleep(int(report['interval'].split('_')[1]) - 1)
+                time_to_wait = int(report['interval'].split('_')[1]) - 1
+            
+            print(f'report name: {report['name']}')
+            print(f'cur utc time: {now}, cur local time: {local_now}')
+            print(f'next report in {time_to_wait} seconds')
+            print(f'at utc time: {now + datetime.timedelta(seconds=time_to_wait)}, at local time: {local_now + datetime.timedelta(seconds=time_to_wait)}')
 
+            await asyncio.sleep(time_to_wait)
             channel = bot.get_channel(report['target_channel'])
             if channel:
                 res = await report['func'](conn)
