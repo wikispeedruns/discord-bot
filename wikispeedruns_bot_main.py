@@ -78,7 +78,7 @@ async def on_ready():
             if report['interval'].startswith('DEBUG_'):
                 time_to_wait = int(report['interval'].split('_')[1]) - 1
             
-            print(f'report name: {report['name']}')
+            print(f'report name: {report["name"]}')
             print(f'cur utc time: {now}, cur local time: {local_now}')
             print(f'next report in {time_to_wait} seconds')
             print(f'at utc time: {now + datetime.timedelta(seconds=time_to_wait)}, at local time: {local_now + datetime.timedelta(seconds=time_to_wait)}')

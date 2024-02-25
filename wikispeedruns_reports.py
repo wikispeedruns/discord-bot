@@ -3,7 +3,7 @@ import datetime
 
 from pymysql.cursors import DictCursor
 
-    
+
 def _count_consecutive_future_prompts(conn):
     query = """
     SELECT active_start FROM sprint_prompts WHERE active_start > DATE(NOW()) ORDER BY active_start
@@ -12,7 +12,7 @@ def _count_consecutive_future_prompts(conn):
         cursor.execute(query)
         dates = [row['active_start'].date() for row in cursor.fetchall()]  # Convert datetime to date
         conn.commit()
-    
+
     if not dates: return 0
 
     count = 0
@@ -39,8 +39,8 @@ def _count_rows_from_table(conn, table_name, ts_col=None):
 
 
 def _get_num_cmty_submissions(conn, daily=False, sprints=True):
-    return _count_rows_from_table(conn, 
-                                  f"cmty_pending_prompts_{'sprints' if sprints else 'marathon'}", 
+    return _count_rows_from_table(conn,
+                                  f"cmty_pending_prompts_{'sprints' if sprints else 'marathon'}",
                                   ts_col='submitted_time' if daily else None)
 
 
@@ -67,7 +67,7 @@ async def cmty_submission_stats(conn):
     return f"Cmty sprints submitted in the last 24 hours: **{sprint_daily}**" + \
         f"\nCmty marathons submitted in the last 24 hours: **{marathon_daily}**" + \
         f"\nTotal pending cmty sprints: **{sprint_total}**" + \
-        f"\nTotal pending cmty marathons: **{marathon_total}**" 
+        f"\nTotal pending cmty marathons: **{marathon_total}**"
 
 def _get_leaderboard_query(
     prompt_id,
@@ -76,7 +76,7 @@ def _get_leaderboard_query(
     join_user=False,
     select_str="count(*) AS count"
 ):
-    
+
     where_conditions = ['runs.start_time >= prompt.active_start',
                         'runs.start_time <= prompt.active_end',
                         f'runs.prompt_id = {prompt_id}']
@@ -85,7 +85,7 @@ def _get_leaderboard_query(
 
     query = f"""
     SELECT {select_str} FROM wikipedia_speedruns.sprint_runs AS runs
-    JOIN wikipedia_speedruns.sprint_prompts AS prompt 
+    JOIN wikipedia_speedruns.sprint_prompts AS prompt
     ON runs.prompt_id = prompt.prompt_id
     """
 
@@ -114,7 +114,7 @@ def _get_leaderboard_query(
 async def daily_prompt_summary(conn):
     query = """
     SELECT prompt_id, start FROM wikipedia_speedruns.sprint_prompts
-    WHERE active_end >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR) 
+    WHERE active_end >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
 		AND active_end < UTC_TIMESTAMP()
     ORDER BY active_end DESC
     LIMIT 1
@@ -126,15 +126,15 @@ async def daily_prompt_summary(conn):
         start_article = prompt['start']
         conn.commit()
 
-    num_runs                = _get_leaderboard_query(prompt_id, select_str='count(*) as res', 
+    num_runs                = _get_leaderboard_query(prompt_id, select_str='count(*) as res',
                                                      only_completed=False, first_per_user=True)
-    num_completed_runs      = _get_leaderboard_query(prompt_id, select_str='count(*) as res', 
+    num_completed_runs      = _get_leaderboard_query(prompt_id, select_str='count(*) as res',
                                                      only_completed=True, first_per_user=True)
-    average_time            = _get_leaderboard_query(prompt_id, select_str='avg(play_time) as res', 
+    average_time            = _get_leaderboard_query(prompt_id, select_str='avg(play_time) as res',
                                                      only_completed=True, first_per_user=True)
-    average_path_length     = _get_leaderboard_query(prompt_id, select_str="JSON_LENGTH(runs.`path`, '$.path') AS res", 
+    average_path_length     = _get_leaderboard_query(prompt_id, select_str="JSON_LENGTH(runs.`path`, '$.path') AS res",
                                                      only_completed=True, first_per_user=True)
-    
+
     with conn.cursor(cursor=DictCursor) as cursor:
         output = []
         for item in [num_runs, num_completed_runs, average_time, average_path_length]:
@@ -142,8 +142,8 @@ async def daily_prompt_summary(conn):
             output.append(cursor.fetchone()['res'])
             conn.commit()
         num_runs, num_completed_runs, average_time, average_path_length = tuple(output)
-    
-    top = _get_leaderboard_query(prompt_id, select_str="username, play_time", 
+
+    top = _get_leaderboard_query(prompt_id, select_str="username, play_time",
                                  only_completed=True, first_per_user=True, join_user=True) + \
         " ORDER BY play_time LIMIT 3"
     with conn.cursor(cursor=DictCursor) as cursor:
@@ -159,7 +159,7 @@ async def daily_prompt_summary(conn):
         completion_rate_comment = "Oooof."
     elif completion_rate < 50:
         completion_rate_comment = "Yikes!"
-    elif completion_rate < 75: 
+    elif completion_rate < 75:
         completion_rate_comment = "Not bad!"
 
     average_time_comment = "At least someone finished... Maybe?"
@@ -177,12 +177,13 @@ async def daily_prompt_summary(conn):
     average_path_length_comment = ""
     if average_path_length < 5:
         average_path_length_comment = "Was this prompt too easy?"
-    
+
 
     return f"\n***Prompt {prompt_id}: \"{start_article}\"***\n\n" + \
         f"**{num_runs}** wikispeedrunners attempted this prompt, while **{num_completed_runs}** crossed the finish line on their first try. \n" + \
         f"That's an overall first try completion rate of **{completion_rate:.1f}%**. {completion_rate_comment}\n\n" + \
-        f"Of those who finished, the average time is **{average_time}** seconds. {average_time_comment}\n" + \
-        f"The average path length was **{average_path_length}**. {average_path_length_comment}\n\n" + \
-        f"Congrats to our top {len(top)}: {', '.join([f'**{row['username']}** *({row['play_time']} seconds)*' for row in top])}!\n\n" + \
+        f"Of those who finished, the average time is **{average_time:.2f}** seconds. {average_time_comment}\n" + \
+        f"The average path length was **{int(average_path_length)}**. {average_path_length_comment}\n\n" + \
+        f"""Congrats to our top {len(top)}: {', '.join([f'**{row["username"]}** *({row["play_time"]:.2f} seconds)*' for row
+        in top])}!\n\n""" + \
         "Go challenge today's prompt when you're ready at** https://wikispeedruns.com/ **. See you again in 24 hours!"
